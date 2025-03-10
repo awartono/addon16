@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_user_sessions_tree" model="ir.ui.view">
+        <field name="name">user.sessions.tree</field>
+        <field name="model">user.sessions</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="user_id"/>
+                <field name="login_time"/>
+                <field name="last_activity"/>
+                <field name="ip_address"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_user_sessions_form" model="ir.ui.view">
+        <field name="name">user.sessions.form</field>
+        <field name="model">user.sessions</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="user_id"/>
+                        <field name="login_time"/>
+                        <field name="last_activity"/>
+                        <field name="ip_address"/>
+                        <field name="status"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_user_sessions" model="ir.actions.act_window">
+        <field name="name">Active Users</field>
+        <field name="res_model">user.sessions</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No active sessions found
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_user_sessions"
+        name="Active Sessions"
+        parent="base.menu_administration"
+        action="action_user_sessions"
+        sequence="100"/>
+</odoo> 

@@ -13,17 +13,87 @@ class HolidayScraper(models.TransientModel):
     calendar_id = fields.Many2one('resource.calendar', string='Working Time', required=True,
                                 default=lambda self: self.env.company.resource_calendar_id)
     year = fields.Integer(string='Year', default=2025)
+    mandatory_joint_leaves = fields.Many2many(
+        'resource.calendar.leaves',
+        string='Cuti Bersama Wajib',
+        domain="[('holiday_type', '=', 'joint_leave')]",
+        help="Pilih cuti bersama yang wajib diambil oleh karyawan"
+    )
 
     def _get_fixed_holidays(self):
-        # Mapping untuk hari libur dengan tanggal tetap
+        # Mapping untuk hari libur dengan tanggal tetap (Libur Nasional)
         fixed_holidays = {
-            'Tahun Baru Masehi': {'month': 1, 'day': 1},
-            'Hari Buruh': {'month': 5, 'day': 1},
-            'Hari Lahir Pancasila': {'month': 6, 'day': 1},
-            'Hari Kemerdekaan': {'month': 8, 'day': 17},
-            'Hari Natal': {'month': 12, 'day': 25},
+            'Tahun Baru Masehi': {'month': 1, 'day': 1, 'type': 'national'},
+            'Hari Buruh': {'month': 5, 'day': 1, 'type': 'national'},
+            'Hari Lahir Pancasila': {'month': 6, 'day': 1, 'type': 'national'},
+            'Hari Kemerdekaan': {'month': 8, 'day': 17, 'type': 'national'},
+            'Hari Natal': {'month': 12, 'day': 25, 'type': 'national'},
         }
         return fixed_holidays
+
+    def _is_cuti_bersama(self, holiday_name):
+        return 'Cuti Bersama' in holiday_name
+
+    def _create_leave_allocation_deduction(self, employee, date_from, date_to, holiday_name):
+        # Cek apakah karyawan memiliki alokasi cuti
+        allocation = self.env['hr.leave.allocation'].search([
+            ('employee_id', '=', employee.id),
+            ('state', '=', 'validate'),
+            ('holiday_status_id.time_type', '=', 'leave'),  # Tipe cuti regular
+            ('date_from', '<=', date_from),
+            '|',
+            ('date_to', '=', False),
+            ('date_to', '>=', date_to),
+        ], limit=1)
+
+        if allocation:
+            # Jika ada alokasi, kurangi jumlah hari dari alokasi
+            self.env['hr.leave'].create({
+                'name': f'Cuti Bersama - {holiday_name}',
+                'employee_id': employee.id,
+                'holiday_status_id': allocation.holiday_status_id.id,
+                'date_from': date_from,
+                'date_to': date_to,
+                'number_of_days': 1,
+                'state': 'validate',
+            })
+        else:
+            # Cek kontrak aktif karyawan untuk mendapatkan gaji pokok
+            contract = self.env['hr.contract'].search([
+                ('employee_id', '=', employee.id),
+                ('state', '=', 'open'),
+                ('date_start', '<=', date_from),
+                '|',
+                ('date_end', '=', False),
+                ('date_end', '>=', date_to),
+            ], limit=1)
+
+            if contract:
+                # Buat record cuti bersama yang harus dipotong
+                self.env['hr.joint.leave'].create({
+                    'name': f'Potongan Cuti Bersama - {holiday_name}',
+                    'date_from': date_from,
+                    'date_to': date_to,
+                    'employee_id': employee.id,
+                    'amount': -(contract.wage / 21),  # Asumsi 21 hari kerja
+                    'state': 'draft'
+                })
+
+    def _process_holiday(self, holiday, date_from, date_to):
+        is_cuti_bersama = self._is_cuti_bersama(holiday['name'])
+        holiday_type = 'joint_leave' if is_cuti_bersama else 'national'
+
+        # Buat resource.calendar.leaves
+        leave_vals = {
+            'name': holiday['name'],
+            'calendar_id': self.calendar_id.id,
+            'date_from': date_from,
+            'date_to': date_to,
+            'holiday_type': holiday_type,
+            'is_mandatory': False if is_cuti_bersama else True,  # Default False untuk cuti bersama
+        }
+        calendar_leave = self.env['resource.calendar.leaves'].create(leave_vals)
+        return calendar_leave
 
     def _is_valid_date(self, year, month, day):
         try:
@@ -165,12 +235,7 @@ class HolidayScraper(models.TransientModel):
                 skipped_holidays.append(f"{holiday['name']} (overlap dengan {existing_leave[0].name})")
                 continue
 
-            self.env['resource.calendar.leaves'].create({
-                'name': holiday['name'],
-                'calendar_id': self.calendar_id.id,
-                'date_from': date_from,
-                'date_to': date_to,
-            })
+            self._process_holiday(holiday, date_from, date_to)
 
         return {
             'type': 'ir.actions.client',

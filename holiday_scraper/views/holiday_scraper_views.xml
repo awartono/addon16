@@ -5,14 +5,25 @@
         <field name="model">holiday.scraper</field>
         <field name="arch" type="xml">
             <form string="Import Public Holidays">
-                <group>
-                    <field name="calendar_id"/>
-                    <field name="year"/>
-                </group>
-                <footer>
-                    <button name="action_import_holidays" string="Import Holidays" type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </footer>
+                <sheet>
+                    <group>
+                        <field name="calendar_id"/>
+                        <field name="year"/>
+                    </group>
+                    <group string="Cuti Bersama Wajib">
+                        <field name="mandatory_joint_leaves" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="date_from"/>
+                                <field name="date_to"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <footer>
+                        <button name="action_import_holidays" string="Import Holidays" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
             </form>
         </field>
     </record>

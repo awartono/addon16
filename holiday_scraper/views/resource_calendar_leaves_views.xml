@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- <record id="hr_holidays.resource_calendar_leaves_tree_inherit" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record> -->
+    
+    <record id="view_resource_calendar_leaves_tree_inherit" model="ir.ui.view">
+        <field name="name">resource.calendar.leaves.tree.inherit</field>
+        <field name="model">resource.calendar.leaves</field>
+        <field name="priority">9</field>
+        <field name="inherit_id" ref="resource.resource_calendar_leave_tree"/>
+        <field name="arch" type="xml">
+            <!-- <xpath expr="//tree" position="attributes">
+                <attribute name="editable" eval="False"/>
+            </xpath> -->
+            <tree position="attributes">
+                <attribute name="decoration-info">holiday_type == 'joint_leave' and not is_mandatory</attribute>
+                <attribute name="decoration-success">holiday_type == 'joint_leave' and is_mandatory</attribute>
+            </tree>
+            <field name="name" position="after">
+                <field name="holiday_type"/>
+                <field name="is_mandatory"/>
+                <button name="action_process_joint_leave" 
+                            type="object" 
+                            class="oe_stat_button"
+                            icon="fa-gears"
+                            string="Proses Cuti Bersama"
+                            attrs="{'invisible': ['|', ('is_mandatory', '=', False), ('holiday_type', '!=', 'joint_leave')]}"
+                            confirm="Apakah Anda yakin akan memproses cuti bersama ini? Tindakan ini akan mengurangi alokasi cuti atau membuat potongan gaji untuk karyawan yang tidak memiliki alokasi cuti."/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Form view inheritance tetap sama -->
+    <record id="resource_calendar_leaves_form_view_inherit" model="ir.ui.view">
+        <field name="name">resource.calendar.leaves.form.inherit</field>
+        <field name="model">resource.calendar.leaves</field>
+        <field name="inherit_id" ref="resource.resource_calendar_leave_form"/>
+        <field name="arch" type="xml">
+            <field name="resource_id" position="after">
+                <field name="holiday_type"/>
+                <field name="is_mandatory" attrs="{'invisible': [('holiday_type', '!=', 'joint_leave')]}"/>
+                <div class="oe_button_box" name="button_box" attrs="{'invisible': [('holiday_type', '!=', 'joint_leave')]}">
+                    <button name="action_process_joint_leave" 
+                            type="object" 
+                            class="oe_stat_button"
+                            icon="fa-gears"
+                            string="Proses Cuti Bersama"
+                            attrs="{'invisible': ['|', ('is_mandatory', '=', False), ('holiday_type', '!=', 'joint_leave')]}"
+                            confirm="Apakah Anda yakin akan memproses cuti bersama ini? Tindakan ini akan mengurangi alokasi cuti atau membuat potongan gaji untuk karyawan yang tidak memiliki alokasi cuti."/>
+                </div>
+            </field>
+               
+        </field>
+    </record>
+</odoo> 

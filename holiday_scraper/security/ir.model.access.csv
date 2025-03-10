@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_holiday_scraper,access_holiday_scraper,model_holiday_scraper,base.group_user,1,1,1,1
+access_hr_joint_leave_officer,hr.joint.leave.officer,model_hr_joint_leave,sh_hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_joint_leave_manager,hr.joint.leave.manager,model_hr_joint_leave,sh_hr_payroll.group_hr_payroll_manager,1,1,1,1

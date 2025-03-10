@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Salary Rule Category untuk Potongan Cuti Bersama -->
+        <record id="rule_category_cuti_bersama" model="hr.salary.rule.category">
+            <field name="name">Potongan Cuti Bersama</field>
+            <field name="code">PCUTBER</field>
+        </record>
+
+        <!-- Salary Rule untuk Potongan Cuti Bersama -->
+        <record id="salary_rule_cuti_bersama" model="hr.salary.rule">
+            <field name="name">Potongan Cuti Bersama</field>
+            <field name="code">PCUTBER</field>
+            <field name="category_id" ref="sh_hr_payroll.DED"/>
+            <field name="sequence">190</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = inputs.CUTBER and inputs.CUTBER.amount or 0.0</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = inputs.CUTBER and inputs.CUTBER.amount != 0 or False</field>
+        </record>
+
+        <!-- Menambahkan rule ke struktur gaji yang ada -->
+        <function model="hr.payroll.structure" name="write">
+            <value model="hr.payroll.structure" search="[('code', '=', 'BASE')]"/>
+            <value eval="{'rule_ids': [(4, ref('salary_rule_cuti_bersama'))]}"/>
+        </function>
+    </data>
+</odoo> 
